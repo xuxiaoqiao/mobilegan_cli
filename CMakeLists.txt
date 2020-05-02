@@ -13,3 +13,13 @@ add_executable(mobilegan_cli
         seq/app.cpp)
 target_include_directories(mobilegan_cli PRIVATE .)
 target_link_libraries(mobilegan_cli opencl_wrapper_lib)
+
+
+add_executable(mobilegan_seq
+        seq_main.cpp
+        seq/tensor.hpp
+        seq/layers.hpp seq/layers.cpp
+        seq/app.cpp
+        )
+target_include_directories(mobilegan_seq PRIVATE .)
+target_link_libraries(mobilegan_seq opencl_wrapper_lib)
