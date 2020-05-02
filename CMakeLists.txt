@@ -22,4 +22,3 @@ add_executable(mobilegan_seq
         seq/app.cpp
         )
 target_include_directories(mobilegan_seq PRIVATE .)
-target_link_libraries(mobilegan_seq opencl_wrapper_lib)
