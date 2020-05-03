@@ -10,7 +10,10 @@ add_executable(mobilegan_cli
         main.cpp
         seq/tensor.hpp
         seq/layers.hpp seq/layers.cpp
-        seq/app.cpp)
+        seq/app.cpp
+        parallel/layers.hpp parallel/layers.cpp
+        parallel/runtime.hpp parallel/runtime.cpp
+        parallel/app.cpp)
 target_include_directories(mobilegan_cli PRIVATE .)
 target_link_libraries(mobilegan_cli opencl_wrapper_lib)
 
