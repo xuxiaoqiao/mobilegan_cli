@@ -54,6 +54,19 @@ void init_kernels(cl_context context, cl_device_id device) {
       conv2d_transpose_regular_program,
       "conv2d_transpose_3x3_stride2",
       nullptr);
+
+  conversion_program = CreateProgram(context,
+                                     device,
+                                     "conversion.cl",
+                                     "");
+  convert_chw_to_chw4_kernel = clCreateKernel(
+      conversion_program,
+      "conv_chw_to_chw4",
+      nullptr);
+  convert_chw4_to_chw_kernel = clCreateKernel(
+      conversion_program,
+      "conv_chw4_to_chw",
+      nullptr);
 }
 
 void conv2d_exec_async(cl_command_queue queue,

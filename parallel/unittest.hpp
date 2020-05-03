@@ -1,0 +1,6 @@
+#ifndef PARALLEL_UNITTEST_HPP
+#define PARALLEL_UNITTEST_HPP
+
+int test_run();
+
+#endif // PARALLEL_UNITTEST_HPP

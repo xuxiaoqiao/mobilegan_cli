@@ -80,12 +80,12 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device) {
   if (errNum != CL_SUCCESS) {
     std::cerr
         << "Failed call to clGetContextInfo(...,GL_CONTEXT_DEVICES,...)";
-    return NULL;
+    std::abort();
   }
 
   if (deviceBufferSize <= 0) {
     std::cerr << "No devices available.";
-    return NULL;
+    std::abort();
   }
 
   // Allocate memory for the devices buffer
@@ -98,7 +98,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device) {
   if (errNum != CL_SUCCESS) {
     delete[] devices;
     std::cerr << "Failed to get device IDs";
-    return NULL;
+    std::abort();
   }
 
   // In this example, we just choose the first available device.  In a
@@ -108,7 +108,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device) {
   if (commandQueue == NULL) {
     delete[] devices;
     std::cerr << "Failed to create commandQueue for device 0";
-    return NULL;
+    std::abort();
   }
 
   *device = devices[0];
@@ -130,7 +130,7 @@ cl_program CreateProgram(cl_context context,
   if (!kernelFile.is_open()) {
     std::cerr << "Failed to open file for reading: " << fileName
               << std::endl;
-    return NULL;
+    std::abort();
   }
 
   std::ostringstream oss;
@@ -143,7 +143,7 @@ cl_program CreateProgram(cl_context context,
                                       NULL, NULL);
   if (program == NULL) {
     std::cerr << "Failed to create CL program from source." << std::endl;
-    return NULL;
+    std::abort();
   }
 
   errNum = clBuildProgram(program, 0, NULL, build_options.c_str(), NULL, NULL);
@@ -156,7 +156,7 @@ cl_program CreateProgram(cl_context context,
     std::cerr << "Error in kernel: " << std::endl;
     std::cerr << buildLog;
     clReleaseProgram(program);
-    return NULL;
+    std::abort();
   }
 
   return program;

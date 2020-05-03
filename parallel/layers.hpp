@@ -1,7 +1,7 @@
 #ifndef PARALLEL_LAYERS_HPP
 #define PARALLEL_LAYERS_HPP
 
-#include <CL/cl.hpp>
+#include <CL/cl.h>
 
 enum class activation {
   NONE,
