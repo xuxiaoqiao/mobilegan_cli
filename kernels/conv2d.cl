@@ -16,6 +16,11 @@ __kernel void conv2d(
   __private int stride,
   __private int kernel_height,
   __private int kernel_width
+  #ifdef USE_INSTANCE_NORM
+  ,
+  __global float* mean,
+  __global float* variance
+  #endif
   )
 {
   // each thread is responsible for 2*4 float output
@@ -71,10 +76,16 @@ __kernel void conv2d(
       in_height_idx++;
     }
   }
+
+#ifdef USE_INSTANCE_NORM
+  // TODO
+#endif
 #ifdef USE_RELU
+  // TODO
 #endif
 
 #ifdef USE_TANH
+  // TODO
 #endif
   int out0_offset = out_channel_block_idx * out_height * out_width +
                     out_height_idx * out_width +
