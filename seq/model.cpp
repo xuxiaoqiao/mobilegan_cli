@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void load_1d_array(char* filepath, std::vector<float> &data) {
+void load_1d_array(const char* filepath, std::vector<float> &data) {
     FILE * fp;
     char * line = NULL;
     size_t len = 0;
@@ -25,7 +25,7 @@ void load_1d_array(char* filepath, std::vector<float> &data) {
         free(line);
 }
 
-void load_4d_array(char* filepath, int N, int C, int H, int W, Tensor4D &data) {
+void load_4d_array(const char* filepath, int N, int C, int H, int W, Tensor4D &data) {
     FILE * fp;
     char * line = NULL;
     size_t len = 0;
@@ -51,7 +51,6 @@ void load_4d_array(char* filepath, int N, int C, int H, int W, Tensor4D &data) {
         free(tofree);
         line_count++;
     }
-
     fclose(fp);
     if (line)
         free(line);
@@ -59,11 +58,6 @@ void load_4d_array(char* filepath, int N, int C, int H, int W, Tensor4D &data) {
 
 void load_kernel(char* wfile, char* bfile, kernel &k) {
     load_4d_array(wfile, k.C_out, k.C, k.H, k.W, k.weight);
-    load_1d_array(bfile, k.bias);
-}
-
-void load_trans_kernel(char* wfile, char* bfile, kernel &k) {
-    load_4d_array(wfile, k.C, k.C_out, k.H, k.W, k.weight);
     load_1d_array(bfile, k.bias);
 }
 
@@ -82,60 +76,60 @@ void load_res_block(char* wfile1, char* bfile1, char* mfile1, char *vfile1,
 }
 
 void load_model(model &cycleGAN) {
-    load_kernel("pretrain/model.1.weight.txt", "pretrain/model.1.bias.txt", cycleGAN.m_1);
-    load_norm_stat("pretrain/model.2.running_mean.txt", "pretrain/model.2.running_var.txt", cycleGAN.m_2);
-    load_kernel("pretrain/model.4.weight.txt", "pretrain/model.4.bias.txt", cycleGAN.m_4);
-    load_norm_stat("pretrain/model.5.running_mean.txt", "pretrain/model.5.running_var.txt", cycleGAN.m_5);
-    load_kernel("pretrain/model.7.weight.txt", "pretrain/model.7.bias.txt", cycleGAN.m_7);
-    load_norm_stat("pretrain/model.8.running_mean.txt", "pretrain/model.8.running_var.txt", cycleGAN.m_8);
-    load_res_block("pretrain/model.10.conv_block.1.weight.txt", "pretrain/model.10.conv_block.1.bias.txt",
-        "pretrain/model.10.conv_block.2.running_mean.txt", "pretrain/model.10.conv_block.2.running_var.txt",
-        "pretrain/model.10.conv_block.5.weight.txt", "pretrain/model.10.conv_block.5.bias.txt",
-        "pretrain/model.10.conv_block.6.running_mean.txt", "pretrain/model.10.conv_block.6.running_var.txt",
+    load_kernel((char*)"../pretrain/model.1.weight.txt", (char*)"../pretrain/model.1.bias.txt", cycleGAN.m_1);
+    load_norm_stat((char*)"../pretrain/model.2.running_mean.txt", (char*)"../pretrain/model.2.running_var.txt", cycleGAN.m_2);
+    load_kernel((char*)"../pretrain/model.4.weight.txt", (char*)"../pretrain/model.4.bias.txt", cycleGAN.m_4);
+    load_norm_stat((char*)"../pretrain/model.5.running_mean.txt", (char*)"../pretrain/model.5.running_var.txt", cycleGAN.m_5);
+    load_kernel((char*)"../pretrain/model.7.weight.txt", (char*)"../pretrain/model.7.bias.txt", cycleGAN.m_7);
+    load_norm_stat((char*)"../pretrain/model.8.running_mean.txt", (char*)"../pretrain/model.8.running_var.txt", cycleGAN.m_8);
+    load_res_block((char*)"../pretrain/model.10.conv_block.1.weight.txt", (char*)"../pretrain/model.10.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.10.conv_block.2.running_mean.txt", (char*)"../pretrain/model.10.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.10.conv_block.5.weight.txt", (char*)"../pretrain/model.10.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.10.conv_block.6.running_mean.txt", (char*)"../pretrain/model.10.conv_block.6.running_var.txt",
         cycleGAN.m_10);
-    load_res_block("pretrain/model.11.conv_block.1.weight.txt", "pretrain/model.11.conv_block.1.bias.txt",
-        "pretrain/model.11.conv_block.2.running_mean.txt", "pretrain/model.11.conv_block.2.running_var.txt",
-        "pretrain/model.11.conv_block.5.weight.txt", "pretrain/model.11.conv_block.5.bias.txt",
-        "pretrain/model.11.conv_block.6.running_mean.txt", "pretrain/model.11.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.11.conv_block.1.weight.txt", (char*)"../pretrain/model.11.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.11.conv_block.2.running_mean.txt", (char*)"../pretrain/model.11.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.11.conv_block.5.weight.txt", (char*)"../pretrain/model.11.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.11.conv_block.6.running_mean.txt", (char*)"../pretrain/model.11.conv_block.6.running_var.txt",
         cycleGAN.m_11);
-    load_res_block("pretrain/model.12.conv_block.1.weight.txt", "pretrain/model.12.conv_block.1.bias.txt",
-        "pretrain/model.12.conv_block.2.running_mean.txt", "pretrain/model.12.conv_block.2.running_var.txt",
-        "pretrain/model.12.conv_block.5.weight.txt", "pretrain/model.12.conv_block.5.bias.txt",
-        "pretrain/model.12.conv_block.6.running_mean.txt", "pretrain/model.12.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.12.conv_block.1.weight.txt", (char*)"../pretrain/model.12.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.12.conv_block.2.running_mean.txt", (char*)"../pretrain/model.12.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.12.conv_block.5.weight.txt", (char*)"../pretrain/model.12.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.12.conv_block.6.running_mean.txt", (char*)"../pretrain/model.12.conv_block.6.running_var.txt",
         cycleGAN.m_12);
-    load_res_block("pretrain/model.13.conv_block.1.weight.txt", "pretrain/model.13.conv_block.1.bias.txt",
-        "pretrain/model.13.conv_block.2.running_mean.txt", "pretrain/model.13.conv_block.2.running_var.txt",
-        "pretrain/model.13.conv_block.5.weight.txt", "pretrain/model.13.conv_block.5.bias.txt",
-        "pretrain/model.13.conv_block.6.running_mean.txt", "pretrain/model.13.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.13.conv_block.1.weight.txt", (char*)"../pretrain/model.13.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.13.conv_block.2.running_mean.txt", (char*)"../pretrain/model.13.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.13.conv_block.5.weight.txt", (char*)"../pretrain/model.13.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.13.conv_block.6.running_mean.txt", (char*)"../pretrain/model.13.conv_block.6.running_var.txt",
         cycleGAN.m_13);
-    load_res_block("pretrain/model.14.conv_block.1.weight.txt", "pretrain/model.14.conv_block.1.bias.txt",
-        "pretrain/model.14.conv_block.2.running_mean.txt", "pretrain/model.14.conv_block.2.running_var.txt",
-        "pretrain/model.14.conv_block.5.weight.txt", "pretrain/model.14.conv_block.5.bias.txt",
-        "pretrain/model.14.conv_block.6.running_mean.txt", "pretrain/model.14.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.14.conv_block.1.weight.txt", (char*)"../pretrain/model.14.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.14.conv_block.2.running_mean.txt", (char*)"../pretrain/model.14.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.14.conv_block.5.weight.txt", (char*)"../pretrain/model.14.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.14.conv_block.6.running_mean.txt", (char*)"../pretrain/model.14.conv_block.6.running_var.txt",
         cycleGAN.m_14);
-    load_res_block("pretrain/model.15.conv_block.1.weight.txt", "pretrain/model.15.conv_block.1.bias.txt",
-        "pretrain/model.15.conv_block.2.running_mean.txt", "pretrain/model.15.conv_block.2.running_var.txt",
-        "pretrain/model.15.conv_block.5.weight.txt", "pretrain/model.15.conv_block.5.bias.txt",
-        "pretrain/model.15.conv_block.6.running_mean.txt", "pretrain/model.15.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.15.conv_block.1.weight.txt", (char*)"../pretrain/model.15.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.15.conv_block.2.running_mean.txt", (char*)"../pretrain/model.15.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.15.conv_block.5.weight.txt", (char*)"../pretrain/model.15.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.15.conv_block.6.running_mean.txt", (char*)"../pretrain/model.15.conv_block.6.running_var.txt",
         cycleGAN.m_15);
-    load_res_block("pretrain/model.16.conv_block.1.weight.txt", "pretrain/model.16.conv_block.1.bias.txt",
-        "pretrain/model.16.conv_block.2.running_mean.txt", "pretrain/model.16.conv_block.2.running_var.txt",
-        "pretrain/model.16.conv_block.5.weight.txt", "pretrain/model.16.conv_block.5.bias.txt",
-        "pretrain/model.16.conv_block.6.running_mean.txt", "pretrain/model.16.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.16.conv_block.1.weight.txt", (char*)"../pretrain/model.16.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.16.conv_block.2.running_mean.txt", (char*)"../pretrain/model.16.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.16.conv_block.5.weight.txt", (char*)"../pretrain/model.16.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.16.conv_block.6.running_mean.txt", (char*)"../pretrain/model.16.conv_block.6.running_var.txt",
         cycleGAN.m_16);
-    load_res_block("pretrain/model.17.conv_block.1.weight.txt", "pretrain/model.17.conv_block.1.bias.txt",
-        "pretrain/model.17.conv_block.2.running_mean.txt", "pretrain/model.17.conv_block.2.running_var.txt",
-        "pretrain/model.17.conv_block.5.weight.txt", "pretrain/model.17.conv_block.5.bias.txt",
-        "pretrain/model.17.conv_block.6.running_mean.txt", "pretrain/model.17.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.17.conv_block.1.weight.txt", (char*)"../pretrain/model.17.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.17.conv_block.2.running_mean.txt", (char*)"../pretrain/model.17.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.17.conv_block.5.weight.txt", (char*)"../pretrain/model.17.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.17.conv_block.6.running_mean.txt", (char*)"../pretrain/model.17.conv_block.6.running_var.txt",
         cycleGAN.m_17);
-    load_res_block("pretrain/model.18.conv_block.1.weight.txt", "pretrain/model.18.conv_block.1.bias.txt",
-        "pretrain/model.18.conv_block.2.running_mean.txt", "pretrain/model.18.conv_block.2.running_var.txt",
-        "pretrain/model.18.conv_block.5.weight.txt", "pretrain/model.18.conv_block.5.bias.txt",
-        "pretrain/model.18.conv_block.6.running_mean.txt", "pretrain/model.18.conv_block.6.running_var.txt",
+    load_res_block((char*)"../pretrain/model.18.conv_block.1.weight.txt", (char*)"../pretrain/model.18.conv_block.1.bias.txt",
+        (char*)"../pretrain/model.18.conv_block.2.running_mean.txt", (char*)"../pretrain/model.18.conv_block.2.running_var.txt",
+        (char*)"../pretrain/model.18.conv_block.5.weight.txt", (char*)"../pretrain/model.18.conv_block.5.bias.txt",
+        (char*)"../pretrain/model.18.conv_block.6.running_mean.txt", (char*)"../pretrain/model.18.conv_block.6.running_var.txt",
         cycleGAN.m_18);
-    load_trans_kernel("pretrain/model.19.weight.txt", "pretrain/model.19.bias.txt", cycleGAN.m_19);
-    load_norm_stat("pretrain/model.20.running_mean.txt", "pretrain/model.20.running_var.txt", cycleGAN.m_20);
-    load_trans_kernel("pretrain/model.22.weight.txt", "pretrain/model.22.bias.txt", cycleGAN.m_22);
-    load_norm_stat("pretrain/model.23.running_mean.txt", "pretrain/model.23.running_var.txt", cycleGAN.m_23);
-    load_kernel("pretrain/model.26.weight.txt", "pretrain/model.26.bias.txt", cycleGAN.m_26);
+    load_kernel((char*)"../pretrain/model.19.weight.txt", (char*)"../pretrain/model.19.bias.txt", cycleGAN.m_19);
+    load_norm_stat((char*)"../pretrain/model.20.running_mean.txt", (char*)"../pretrain/model.20.running_var.txt", cycleGAN.m_20);
+    load_kernel((char*)"../pretrain/model.22.weight.txt", (char*)"../pretrain/model.22.bias.txt", cycleGAN.m_22);
+    load_norm_stat((char*)"../pretrain/model.23.running_mean.txt", (char*)"../pretrain/model.23.running_var.txt", cycleGAN.m_23);
+    load_kernel((char*)"../pretrain/model.26.weight.txt", (char*)"../pretrain/model.26.bias.txt", cycleGAN.m_26);
 }

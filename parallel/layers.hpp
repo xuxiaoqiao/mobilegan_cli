@@ -47,6 +47,7 @@ void conv2d_exec_async(
     activation act
     );
 
+
 void conv2d_transpose_3x3_stride2_norm_relu_exec_async(
     cl_command_queue queue,
     cl_mem input,
