@@ -19,6 +19,8 @@ add_executable(mobilegan_seq
         seq_main.cpp
         seq/tensor.hpp
         seq/layers.hpp seq/layers.cpp
+        seq/unitTest.hpp seq/unitTest.cpp
+        seq/model.hpp seq/model.cpp
         seq/app.cpp
         )
 target_include_directories(mobilegan_seq PRIVATE .)

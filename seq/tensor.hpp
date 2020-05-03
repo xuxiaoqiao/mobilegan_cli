@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <cassert>
+#include <iostream>
 
 class Tensor3D {
 private:
@@ -32,6 +33,18 @@ public:
   }
   std::array<int, 3> shape() const {
       return {dim1, dim2, dim3};
+  }
+  void print() {
+      int idx;
+      for (int idx1 = 0; idx1 < dim1; idx1++) {
+          for (int idx2 = 0; idx2 < dim2; idx2++) {
+              for (int idx3 = 0; idx3 < dim3; idx3++) {
+                  idx = idx1 * _dim2_dim3_prod + idx2 * dim3 + idx3;
+                  std::cout << data[idx] << " ";
+              }
+              std::cout << "\n";
+          }
+      }
   }
 };
 
@@ -65,6 +78,20 @@ public:
   }
   std::array<int, 4> shape() {
       return {dim1, dim2, dim3, dim4};
+  }
+  void print() {
+      int idx;
+      for (int idx1 = 0; idx1 < dim1; idx1++) {
+          for (int idx2 = 0; idx2 < dim2; idx2++) {
+              for (int idx3 = 0; idx3 < dim3; idx3++) {
+                  for (int idx4 = 0; idx4 < dim4; idx4++) {
+                      idx = idx1 * _dim2_dim3_dim4_prod + idx2 * _dim3_dim4_prod + idx3 * dim4 + idx4;
+                      std::cout << data[idx] << " ";
+                  }
+                  std::cout << "\n";
+              }
+          }
+      }
   }
 };
 
