@@ -4,6 +4,7 @@
 #include "seq/model.hpp"
 #include "seq/app.hpp"
 using namespace std;
+using namespace seq;
 
 int main(int argc, char **argv) {
   // test_reflection_pad_2d();

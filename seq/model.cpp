@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+namespace seq{
 void load_1d_array(const char* filepath, std::vector<float> &data) {
     FILE * fp;
     char * line = NULL;
@@ -132,4 +133,5 @@ void load_model(model &cycleGAN) {
     load_kernel((char*)"./pretrain/model.22.weight.txt", (char*)"./pretrain/model.22.bias.txt", cycleGAN.m_22);
     load_norm_stat((char*)"./pretrain/model.23.running_mean.txt", (char*)"./pretrain/model.23.running_var.txt", cycleGAN.m_23);
     load_kernel((char*)"./pretrain/model.26.weight.txt", (char*)"./pretrain/model.26.bias.txt", cycleGAN.m_26);
+}
 }

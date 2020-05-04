@@ -1,6 +1,8 @@
 #include "seq/layers.hpp"
+#include "seq/unitTest.hpp"
 #include <assert.h> 
 
+namespace seq{
 void test_reflection_pad_2d() {
     int C = 1;
     int H = 3;
@@ -283,4 +285,5 @@ void test_Tanh() {
     0.999909 
     0.999988 
     */
+}
 }

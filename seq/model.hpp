@@ -3,6 +3,7 @@
 
 #include "seq/tensor.hpp"
 
+namespace seq{
 /*
     kernel in conv2d is [C_out, C, H, W]
     kernel in convtranspose2d is [C, C_out, H, W]
@@ -84,5 +85,5 @@ public:
 };
 
 void load_model(model &cycleGAN);
-
+}
 #endif //SEQ_MODEL_HPP
