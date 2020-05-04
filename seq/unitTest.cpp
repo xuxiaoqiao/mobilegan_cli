@@ -394,3 +394,4 @@ void test_conv_2d_2() {
            stride, kernel_H, kernel_W);
     output.print();
 }
+}
