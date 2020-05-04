@@ -286,7 +286,6 @@ void test_Tanh() {
     0.999988 
     */
 }
-<<<<<<< HEAD
 
 void test_conv_2d_2() {
     int C = 4;
@@ -394,6 +393,4 @@ void test_conv_2d_2() {
     conv2d(input, kernel, bias, output, C, H, W, C_out, 
            stride, kernel_H, kernel_W);
     output.print();
-=======
->>>>>>> d11b517fa463854dfda6910c79d0fc73a3861042
 }
