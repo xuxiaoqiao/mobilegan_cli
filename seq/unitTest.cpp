@@ -398,4 +398,109 @@ void test_conv_2d_2() {
            stride, kernel_H, kernel_W);
     output.print();
 }
+
+void test_conv_transpose_2d_2() {
+    int C = 4;
+    int H = 2;
+    int W = 2;
+    Tensor3D input{C, H, W};
+    double data[4][2][2] = {{{3., 3.},
+                            {1., 1.}},
+                            {{3., 3.},
+                            {1., 1.}},
+                            {{1., 2.},
+                            {3., 4.}},
+                            {{1., 2.},
+                            {3., 4.}}};
+    for (int c = 0; c < C; c++) {
+        for (int h = 0; h < H; h++) {
+            for (int w = 0; w < W; w++) {
+                input(c, h, w) = data[c][h][w];
+            }
+        }
+    }
+
+    int C_out = 4;
+    int kernel_H = 3;
+    int kernel_W = 3;
+    int stride = 2;
+    int padding = 1;
+    int out_padding = 1;
+    int H_out = (H-1)*stride - 2*padding + (kernel_H-1) + out_padding + 1;
+    int W_out = (W-1)*stride - 2*padding + (kernel_W-1) + out_padding + 1;
+    Tensor4D kernel{C, C_out, kernel_H, kernel_W};
+    std::vector<float> bias{1, 0, 1, 0};
+    Tensor3D output{C_out, H_out, W_out};
+    float k_data[4][4][3][3] = {{{{1., 2., 3.},
+                                {0., 1., 0.},
+                                {2., 1., 2.}},
+                                {{1., 2., 3.},
+                                {4., 5., 6.},
+                                {7., 8., 9.}},
+                                {{1., 2., 3.},
+                                {0., 1., 0.},
+                                {2., 1., 2.}},
+                                {{1., 2., 3.},
+                                {4., 5., 6.},
+                                {7., 8., 9.}}},
+                                {{{1., 2., 3.},
+                                {0., 1., 0.},
+                                {2., 1., 2.}},
+                                {{1., 2., 3.},
+                                {4., 5., 6.},
+                                {7., 8., 9.}},
+                                {{1., 2., 3.},
+                                {0., 1., 0.},
+                                {2., 1., 2.}},
+                                {{1., 2., 3.},
+                                {4., 5., 6.},
+                                {7., 8., 9.}}},
+                                {{{1., 1., 1.},
+                                {1., 1., 1.},
+                                {1., 1., 1.}},
+                                {{0., 0., 0.},
+                                {0., 0., 0.},
+                                {0., 0., 0.}},
+                                {{1., 1., 1.},
+                                {1., 1., 1.},
+                                {1., 1., 1.}},
+                                {{0., 0., 0.},
+                                {0., 0., 0.},
+                                {0., 0., 0.}}},
+                                {{{1., 1., 1.},
+                                {1., 1., 1.},
+                                {1., 1., 1.}},
+                                {{0., 0., 0.},
+                                {0., 0., 0.},
+                                {0., 0., 0.}},
+                                {{1., 1., 1.},
+                                {1., 1., 1.},
+                                {1., 1., 1.}},
+                                {{0., 0., 0.},
+                                {0., 0., 0.},
+                                {0., 0., 0.}}}};
+    for (int c = 0; c < C; c++) {
+        for (int co = 0; co < C_out; co++) {
+            for (int h = 0; h < kernel_H; h++) {
+                for (int w = 0; w < kernel_W; w++) {
+                    kernel(c, co, h, w) = k_data[c][co][h][w];
+                }
+            }
+        }
+    }
+    conv_transpose_2d(input, kernel, bias, output, C, H, W, C_out,
+                      stride, kernel_H, kernel_W, padding, out_padding);
+    output.print();
+    /*
+    [5 4 6 3 
+    10 27 12 16 
+    5 8 6 5 
+    5 12 6 7] 
+    [17 32 17 20 
+    28 54 28 32 
+    7 12 7 8 
+    10 18 10 11] 
+    */
+}
+
 }
