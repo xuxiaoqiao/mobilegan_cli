@@ -111,9 +111,9 @@ void trial_run_conv2d(cl_context context, cl_command_queue queue) {
 
 void test_conv2d(cl_context context, cl_command_queue queue) {
   #define INPUT_CHANNEL_BLK 1
-  #define INPUT_HW 5
+  #define INPUT_HW 6
   #define OUTPUT_CHANNEL_BLK 1
-  #define OUTPUT_HW 3
+  #define OUTPUT_HW 4
   #define STRIDE 1
 
   vector<float> input(INPUT_CHANNEL_BLK * INPUT_HW * INPUT_HW * 4);
@@ -121,26 +121,30 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
   vector<float> bias{1, 0, 1, 0};
   vector<float> output(OUTPUT_CHANNEL_BLK * OUTPUT_HW * OUTPUT_HW * 4);
 
-  float data[4][5][5] = {{{0,1,1,2,2},
-                          {1,2,1,2,0},
-                          {1,2,2,2,0},
-                          {0,0,1,2,2},
-                          {0,2,2,0,1}}, 
-                          {{0,1,0,1,1},
-                          {2,2,2,2,2},
-                          {2,1,1,0,0},
-                          {1,2,2,1,1},
-                          {0,2,0,0,0}},
-                          {{1,1,1,1,1},
-                          {1,1,1,1,1},
-                          {1,1,1,1,1},
-                          {1,1,1,1,1},
-                          {1,1,1,1,1}}, 
-                          {{0,1,1,2,0},
-                          {0,2,0,1,0},
-                          {2,0,1,1,2},
-                          {1,1,0,2,2},
-                          {1,2,1,0,2}}};
+  float data[4][6][6] = {{{0,1,1,2,2,0},
+                          {1,2,1,2,0,0},
+                          {1,2,2,2,0,0},
+                          {0,0,1,2,2,0},
+                          {0,0,1,2,2,0},
+                          {0,2,2,0,1,0}}, 
+                          {{0,1,0,1,1,0},
+                          {2,2,2,2,2,0},
+                          {2,1,1,0,0,0},
+                          {1,2,2,1,1,0},
+                          {1,2,2,1,1,0},
+                          {0,2,0,0,0,0}},
+                          {{1,1,1,1,1,0},
+                          {1,1,1,1,1,0},
+                          {1,1,1,1,1,0},
+                          {1,1,1,1,1,0},
+                          {1,1,1,1,1,0},
+                          {1,1,1,1,1,0}}, 
+                          {{0,1,1,2,0,0},
+                          {0,2,0,1,0,0},
+                          {2,0,1,1,2,0},
+                          {1,1,0,2,2,0},
+                          {1,1,0,2,2,0},
+                          {1,2,1,0,2,0}}};
 
   for (int c_blk = 0; c_blk < INPUT_CHANNEL_BLK; c_blk++) {
     for (int h = 0; h < INPUT_HW; h++) {
@@ -214,7 +218,7 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
                 ic_blk * 3 * 3 * 16 +
                 kh * 3 * 16 +
                 kw * 16 + i;
-            weight[idx] = k_data[oc_blk+(i/4)][ic_blk+(i%4)][kh][kw];
+            weight[idx] = k_data[oc_blk*4+(i/4)][ic_blk*4+(i%4)][kh][kw];
           }
         }
       }
@@ -286,22 +290,30 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
   std::cout << std::endl;
   std::cout << "Executed program succesfully." << std::endl;
   /*
-  [[[[  5,   5,   6],
-    [  4,   7,   6],
-    [  6,   5,   1]],
+  [[[[  5,   5,   6,   4],
+    [  4,   7,   6,   9],
+    [  4,   1,   5,   8],
+    [ 12,   6,   2,   6]],
 
-    [[  4,   4,   5],
-    [  3,   6,   5],
-    [  5,   4,   0]],
+    [[  4,   4,   5,   3],
+    [  3,   6,   5,   8],
+    [  3,   0,   4,   7],
+    [ 11,   5,   1,   5]],
 
-    [[  0,  -7,  -6],
-    [ -5,  -9,  -5],
-    [ -4,  -9,  -6]],
+    [[  0,  -7,  -6, -10],
+    [ -5,  -9,  -5,  -7],
+    [ -6,  -8,  -5,  -6],
+    [ -1,  -7,  -6,  -7]],
 
-    [[ -1,  -8,  -7],
-    [ -6, -10,  -6],
-    [ -5, -10,  -7]]]]
+    [[ -1,  -8,  -7, -11],
+    [ -6, -10,  -6,  -8],
+    [ -7,  -9,  -6,  -7],
+    [ -2,  -8,  -7,  -8]]]]
   */
+}
+
+void test_convtranspose_2d() {
+
 }
 
 int test_run() {
