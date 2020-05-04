@@ -1,6 +1,8 @@
 #include "seq/layers.hpp"
+#include "seq/unitTest.hpp"
 #include <assert.h> 
 
+namespace seq{
 void test_reflection_pad_2d() {
     int C = 1;
     int H = 3;
@@ -284,6 +286,7 @@ void test_Tanh() {
     0.999988 
     */
 }
+<<<<<<< HEAD
 
 void test_conv_2d_2() {
     int C = 4;
@@ -391,4 +394,6 @@ void test_conv_2d_2() {
     conv2d(input, kernel, bias, output, C, H, W, C_out, 
            stride, kernel_H, kernel_W);
     output.print();
+=======
+>>>>>>> d11b517fa463854dfda6910c79d0fc73a3861042
 }

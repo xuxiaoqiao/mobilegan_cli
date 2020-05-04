@@ -4,6 +4,7 @@
 #include "seq/layers.hpp"
 #include "seq/model.hpp"
 
+namespace seq{
 struct gan_buffer_t {
   Tensor3D o_0{3, 262, 262};
   Tensor3D o_1{64, 256, 256};
@@ -54,5 +55,5 @@ struct gan_buffer_t {
 };
 
 int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf, model &cycleGAN);
-
+}
 #endif

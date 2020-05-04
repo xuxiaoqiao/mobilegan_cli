@@ -4,6 +4,7 @@
 #include <vector>
 #include "seq/tensor.hpp"
 
+namespace seq{
 void reflection_pad_2d(const Tensor3D &input, Tensor3D &output, int padding);
 
 void zero_pad_2d(const Tensor3D &input, Tensor3D &output, int padding);
@@ -43,5 +44,5 @@ void conv_transpose_2d(const Tensor3D &input,
 
 void instance_norm(Tensor3D &input, const std::vector<float> &mean, 
                    const std::vector<float> &variance);
-
+}
 #endif  // SEQ_LAYERS_HPP

@@ -2,6 +2,7 @@
 #include <ctime>
 using namespace std;
 
+namespace seq{
 int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf,
         model &cycleGAN) {
   clock_t begin = clock();
@@ -16,7 +17,7 @@ int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf,
   timeSeconds = (clock() - timestamp) / (double) CLOCKS_PER_SEC;
   printf("%f s for conv2d\n", timeSeconds);
   timestamp = clock();
-  
+
   zero_pad_2d(buf.o_1, buf.o_1_p, 1);
   conv2d(buf.o_1_p, cycleGAN.m_4.weight, cycleGAN.m_4.bias, buf.o_2, 64, 258, 258, 128, 2, 3, 3);
   instance_norm(buf.o_2, cycleGAN.m_5.mean, cycleGAN.m_5.variance);
@@ -185,9 +186,10 @@ int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf,
 
   timeSeconds = (clock() - timestamp) / (double) CLOCKS_PER_SEC;
   printf("%f s for conv\n", timeSeconds);
-  
+
   timeSeconds = (clock() - begin) / (double) CLOCKS_PER_SEC;
   printf("total %f s\n", timeSeconds);
 
   return 0;
+}
 }

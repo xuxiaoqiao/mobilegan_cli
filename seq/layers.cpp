@@ -3,6 +3,7 @@
 
 using namespace std;
 
+namespace seq{
 void reflection_pad_2d(const Tensor3D &input, Tensor3D &output, int padding) {
   int channel_range = input.shape()[0];
   int input_height = input.shape()[1];
@@ -245,4 +246,5 @@ void add(Tensor3D &src, Tensor3D &dst) {
       }
     }
   }
+}
 }
