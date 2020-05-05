@@ -51,7 +51,6 @@ struct gan_buffer_t {
   Tensor3D o_4{128, 128, 128};
   Tensor3D o_5{64, 256, 256};
   Tensor3D o_6{64, 262, 262};
-  Tensor3D o_7{3, 256, 256};
 };
 
 int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf, model &cycleGAN);

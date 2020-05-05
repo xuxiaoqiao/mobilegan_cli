@@ -181,8 +181,8 @@ int run(const Tensor3D &input, Tensor3D &output, gan_buffer_t &buf,
 
   // conv
   reflection_pad_2d(buf.o_5, buf.o_6, 3);
-  conv2d(buf.o_6, cycleGAN.m_26.weight, cycleGAN.m_26.bias, buf.o_7, 64, 262, 262, 3, 1, 7, 7);
-  Tanh(buf.o_7);
+  conv2d(buf.o_6, cycleGAN.m_26.weight, cycleGAN.m_26.bias, output, 64, 262, 262, 3, 1, 7, 7);
+  Tanh(output);
 
   timeSeconds = (clock() - timestamp) / (double) CLOCKS_PER_SEC;
   printf("%f s for conv\n", timeSeconds);
