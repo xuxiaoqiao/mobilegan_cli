@@ -93,7 +93,8 @@ public:
 
 };
 
-void load_model(model &cycleGAN);
+void load_model(model &cycleGAN, cl_context context);
+void release_model(model &cycleGAN);
 
 }
 #endif //PARALLEL_MODEL_HPP
