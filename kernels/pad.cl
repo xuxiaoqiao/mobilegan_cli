@@ -77,3 +77,43 @@ __kernel void reflect_pad_2d_onepix(
   vstore4(out0, out_offset, output);
   vstore4(out1, out_offset+1, output);
 }
+
+__kernel void reflect_pad_2d(
+  __global const float *input,
+  __global float *output,
+  __private int in_channel_num,
+  __private int in_height,
+  __private int in_width,
+  __private int padding
+) {
+  int out_channel_block_idx  = get_global_id(0);
+  int out_height_idx = get_global_id(1);
+  int out_width_idx = get_global_id(2);
+
+  float4 out0;
+  int in0_offset = out_channel_block_idx * in_height * in_width + (out_height_idx - 1) * in_width + (out_width_idx - 1);
+  int in1_offset = in0_offset + 1;
+  if (out_height_idx >= padding && out_height_idx < in_height + padding
+      && out_width_idx >= padding && out_width_idx < in_width + padding)
+  {
+    // do nothing
+  } else
+  {
+    if (out_height_idx < padding)
+    {
+      in0_offset += 2 * (padding - out_height_idx) * in_width;
+    } else if (out_height_idx >= in_height + padding)
+    {
+      in0_offset -= 2 * (in_height + padding + 1 - out_height_idx) * in_width;
+    }
+    if (out_width_idx < padding) {
+      in0_offset += 2 * (padding - out_width_idx);
+    } else if (out_width_idx >= in_width + padding)
+    {
+      in0_offset -= 2 * (in_width + padding + 1 - out_width_idx);
+    }
+  }
+  int out_offset = out_channel_block_idx * (in_height + 2) * (in_width + 2) + out_height_idx * (in_width + 2) + out_width_idx;
+  out0 = convert_float4(vload4(in0_offset, input));
+  vstore4(out0, out_offset, output);
+}

@@ -23,6 +23,7 @@ static cl_kernel convert_chw4_to_chw_kernel = nullptr;
 static cl_program pad_program = nullptr;
 static cl_kernel zero_pad_2d_onepix_kernel = nullptr;
 static cl_kernel reflect_pad_2d_onepix_kernel = nullptr;
+static cl_kernel reflect_pad_2d_general_kernel = nullptr;
 
 static cl_program util_program = nullptr;
 static cl_kernel add_kernel = nullptr;
@@ -91,6 +92,10 @@ void init_kernels(cl_context context, cl_device_id device) {
   reflect_pad_2d_onepix_kernel = clCreateKernel(
       pad_program,
       "reflect_pad_2d_onepix",
+      nullptr);
+  reflect_pad_2d_general_kernel = clCreateKernel(
+      pad_program,
+      "reflect_pad_2d",
       nullptr);
 
   util_program = CreateProgram(context, device, "util.cl", "");
@@ -336,34 +341,61 @@ void zeropad_2d_onepix(cl_command_queue queue,
   }
 }
 
-void reflectpad_2d_onepix(cl_command_queue queue,
-                          cl_mem input,
-                          cl_mem output,
-                          cl_int in_channel_num,
-                          cl_int in_height,
-                          cl_int in_width) {
+void reflectpad_2d(cl_command_queue queue,
+                   cl_mem input,
+                   cl_mem output,
+                   cl_int in_channel_num,
+                   cl_int in_height,
+                   cl_int in_width,
+                   cl_int padding) {
   cl_int errNum;
-  errNum = clSetKernelArg(reflect_pad_2d_onepix_kernel, 0, sizeof(cl_mem), &input);
-  errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 1, sizeof(cl_mem), &output);
-  errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 2, sizeof(cl_int), &in_channel_num);
-  errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 3, sizeof(cl_int), &in_height);
-  errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 4, sizeof(cl_int), &in_width);
-  if (errNum != CL_SUCCESS) {
-    std::cerr << "Error setting kernel arguments." << std::endl;
-    std::abort();
+  if (padding == 1) {
+    errNum = clSetKernelArg(reflect_pad_2d_onepix_kernel, 0, sizeof(cl_mem), &input);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 1, sizeof(cl_mem), &output);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 2, sizeof(cl_int), &in_channel_num);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 3, sizeof(cl_int), &in_height);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 4, sizeof(cl_int), &in_width);
+    if (errNum != CL_SUCCESS) {
+      std::cerr << "Error setting kernel arguments." << std::endl;
+      std::abort();
+    }
+
+    size_t globalWorkSize[3] = {(size_t) (in_channel_num + 3) / 4, (size_t) in_height,
+                                (size_t) in_width / 2};
+
+    // Queue the kernel up for execution across the array
+    errNum = clEnqueueNDRangeKernel(queue, reflect_pad_2d_onepix_kernel, 3, nullptr,
+                                    globalWorkSize, nullptr,
+                                    0, nullptr, nullptr);
+    if (errNum != CL_SUCCESS) {
+      std::cerr << "Error queuing kernel for execution." << std::endl;
+      std::abort();
+    }
+  } else {
+    errNum = clSetKernelArg(reflect_pad_2d_general_kernel, 0, sizeof(cl_mem), &input);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 1, sizeof(cl_mem), &output);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 2, sizeof(cl_int), &in_channel_num);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 3, sizeof(cl_int), &in_height);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 4, sizeof(cl_int), &in_width);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 5, sizeof(cl_int), &padding);
+    if (errNum != CL_SUCCESS) {
+      std::cerr << "Error setting kernel arguments." << std::endl;
+      std::abort();
+    }
+
+    size_t globalWorkSize[3] = {(size_t) (in_channel_num + 3) / 4, (size_t) in_height,
+                                (size_t) in_width};
+
+    // Queue the kernel up for execution across the array
+    errNum = clEnqueueNDRangeKernel(queue, reflect_pad_2d_general_kernel, 3, nullptr,
+                                    globalWorkSize, nullptr,
+                                    0, nullptr, nullptr);
+    if (errNum != CL_SUCCESS) {
+      std::cerr << "Error queuing kernel for execution." << std::endl;
+      std::abort();
+    }
   }
 
-  size_t globalWorkSize[3] = {(size_t) (in_channel_num + 3) / 4, (size_t) in_height,
-                              (size_t) in_width / 2};
-
-  // Queue the kernel up for execution across the array
-  errNum = clEnqueueNDRangeKernel(queue, reflect_pad_2d_onepix_kernel, 3, nullptr,
-                                  globalWorkSize, nullptr,
-                                  0, nullptr, nullptr);
-  if (errNum != CL_SUCCESS) {
-    std::cerr << "Error queuing kernel for execution." << std::endl;
-    std::abort();
-  }
   errNum = clFlush(queue);
   if (errNum != CL_SUCCESS) {
     std::cerr << "Error clFlush()." << std::endl;

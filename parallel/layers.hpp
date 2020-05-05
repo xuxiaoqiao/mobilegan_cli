@@ -75,14 +75,13 @@ void zeropad_2d_onepix(
     cl_int in_width
     );
 
-void reflectpad_2d_onepix(
-    cl_command_queue queue,
-    cl_mem input,
-    cl_mem output,
-    cl_int in_channel_num,
-    cl_int in_height,
-    cl_int in_width
-);
+void reflectpad_2d(cl_command_queue queue,
+                   cl_mem input,
+                   cl_mem output,
+                   cl_int in_channel_num,
+                   cl_int in_height,
+                   cl_int in_width,
+                   cl_int padding);
 
 void add(cl_command_queue queue, cl_mem src, cl_mem dst, cl_int len);
 

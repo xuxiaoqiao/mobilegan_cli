@@ -4,6 +4,7 @@
 #include "parallel/unittest.hpp"
 #include "parallel/runtime.hpp"
 #include "parallel/layers.hpp"
+#include "parallel/model.hpp"
 
 using namespace std;
 
@@ -523,7 +524,16 @@ int test_run() {
   init_kernels(context, device);
   // trial_run_conv2d(context, commandQueue);
   // test_conv2d(context, commandQueue);
-  test_convtranspose_2d(context, commandQueue);
+  // test_convtranspose_2d(context, commandQueue);
+  parallel::model gan_model;
+  parallel::load_model(gan_model, context);
+  parallel::release_model(gan_model);
+  cout << "done" << endl;
+  cout << "printing a kernel value" << endl;
+  for (auto f : gan_model.m_1.weight) {
+    cout << f << ' ';
+  }
+  cout << endl;
 
   return 0;
 }
