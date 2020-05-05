@@ -8,11 +8,11 @@
 using namespace std;
 
 void trial_run_conv2d(cl_context context, cl_command_queue queue) {
-  #define INPUT_CHANNEL_BLK 64
-  #define INPUT_HW 66
-  #define OUTPUT_CHANNEL_BLK 64
-  #define OUTPUT_HW 64
-  #define STRIDE 1
+  constexpr int INPUT_CHANNEL_BLK = 64;
+  constexpr int INPUT_HW = 66;
+  constexpr int OUTPUT_CHANNEL_BLK = 64;
+  constexpr int OUTPUT_HW = 64;
+  constexpr int STRIDE = 1;
 
   vector<float> input(INPUT_CHANNEL_BLK * INPUT_HW * INPUT_HW * 4);
   vector<float> weight(OUTPUT_CHANNEL_BLK * INPUT_CHANNEL_BLK * 3 * 3 * 4 * 4); // C_out, C_in, Kh, Kw, 4c_out, 4c_in
@@ -107,17 +107,20 @@ void trial_run_conv2d(cl_context context, cl_command_queue queue) {
   }
   std::cout << std::endl;
   std::cout << "Executed program succesfully." << std::endl;
+  clReleaseMemObject(input_clbuf);
+  clReleaseMemObject(weight_clbuf);
+  clReleaseMemObject(output_clbuf);
 }
 
 void test_conv2d(cl_context context, cl_command_queue queue) {
-  #define INPUT_CHANNEL_BLK 1
-  #define INPUT_HW 6
-  #define OUTPUT_CHANNEL_BLK 1
-  #define OUTPUT_HW 4
-  #define STRIDE 1
+  constexpr int INPUT_CHANNEL_BLK = 1;
+  constexpr int INPUT_HW = 6;
+  constexpr int OUTPUT_CHANNEL_BLK = 1;
+  constexpr int OUTPUT_HW = 4;
+  constexpr int STRIDE = 1;
 
   vector<float> input(INPUT_CHANNEL_BLK * INPUT_HW * INPUT_HW * 4);
-  vector<float> weight(OUTPUT_CHANNEL_BLK * INPUT_CHANNEL_BLK * 3 * 3 * 4 * 4); // C_out, C_in, Kh, Kw, 4c_out, 4c_in
+  vector<float> weight(OUTPUT_CHANNEL_BLK * INPUT_CHANNEL_BLK * 3 * 3 * 4 * 4); // C_out, C_in, Kh, Kw, 4c_in, 4c_out
   vector<float> bias{1, 0, 1, 0};
   vector<float> output(OUTPUT_CHANNEL_BLK * OUTPUT_HW * OUTPUT_HW * 4);
 
@@ -218,7 +221,7 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
                 ic_blk * 3 * 3 * 16 +
                 kh * 3 * 16 +
                 kw * 16 + i;
-            weight[idx] = k_data[oc_blk*4+(i/4)][ic_blk*4+(i%4)][kh][kw];
+            weight.at(idx)= k_data[oc_blk*4+(i%4)][ic_blk*4+(i/4)][kh][kw];
           }
         }
       }
@@ -289,6 +292,10 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
   }
   std::cout << std::endl;
   std::cout << "Executed program succesfully." << std::endl;
+  clReleaseMemObject(input_clbuf);
+  clReleaseMemObject(weight_clbuf);
+  clReleaseMemObject(bias_clbuf);
+  clReleaseMemObject(output_clbuf);
   /*
   [[[[  5,   5,   6,   4],
     [  4,   7,   6,   9],
@@ -313,13 +320,13 @@ void test_conv2d(cl_context context, cl_command_queue queue) {
 }
 
 void test_convtranspose_2d(cl_context context, cl_command_queue queue) {
-  #define INPUT_CHANNEL_BLK 1
-  #define INPUT_HW 2
-  #define OUTPUT_CHANNEL_BLK 1
-  #define OUTPUT_HW 4
+  constexpr int INPUT_CHANNEL_BLK = 1;
+  constexpr int INPUT_HW = 2;
+  constexpr int OUTPUT_CHANNEL_BLK =  1;
+  constexpr int OUTPUT_HW =  4;
 
   vector<float> input(INPUT_CHANNEL_BLK * INPUT_HW * INPUT_HW * 4);
-  vector<float> weight(INPUT_CHANNEL_BLK * OUTPUT_CHANNEL_BLK * 3 * 3 * 4 * 4); // C_in, C_out, Kh, Kw, 4c_out, 4c_in
+  vector<float> weight(INPUT_CHANNEL_BLK * OUTPUT_CHANNEL_BLK * 3 * 3 * 4 * 4); // C_in, C_out, Kh, Kw, 4c_in, 4c_out
   vector<float> bias{1, 0, 1, 0};
   vector<float> output(OUTPUT_CHANNEL_BLK * OUTPUT_HW * OUTPUT_HW * 4);
 
@@ -401,7 +408,7 @@ void test_convtranspose_2d(cl_context context, cl_command_queue queue) {
                 oc_blk * 3 * 3 * 16 +
                 kh * 3 * 16 +
                 kw * 16 + i;
-            weight[idx] = k_data[ic_blk*4+(i/4)][oc_blk*4+(i%4)][kh][kw];
+            weight[idx] = k_data[ic_blk*4+(i%4)][oc_blk*4+(i/4)][kh][kw];
           }
         }
       }
@@ -451,7 +458,7 @@ void test_convtranspose_2d(cl_context context, cl_command_queue queue) {
                                0, OUTPUT_CHANNEL_BLK * OUTPUT_HW * OUTPUT_HW * 4 * sizeof(float), output.data(),
                                0, NULL, NULL);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error reading result buffer." << std::endl;
+    std::cerr << "Error reading result buffer. errNum: " << errNum << std::endl;
     std::abort();
   }
 
@@ -470,6 +477,10 @@ void test_convtranspose_2d(cl_context context, cl_command_queue queue) {
   }
   std::cout << std::endl;
   std::cout << "Executed program succesfully." << std::endl;
+  clReleaseMemObject(input_clbuf);
+  clReleaseMemObject(weight_clbuf);
+  clReleaseMemObject(bias_clbuf);
+  clReleaseMemObject(output_clbuf);
   /*
   [[[[  9.,   7.,  11.,   5.],
     [ 19.,  53.,  23.,  31.],
@@ -511,7 +522,8 @@ int test_run() {
 
   init_kernels(context, device);
   // trial_run_conv2d(context, commandQueue);
-  test_conv2d(context, commandQueue);
+  // test_conv2d(context, commandQueue);
+  test_convtranspose_2d(context, commandQueue);
 
   return 0;
 }

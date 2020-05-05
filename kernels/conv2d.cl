@@ -24,7 +24,6 @@ __kernel void conv2d(
   )
 {
   // each thread is responsible for 2*4 float output
-
   int out_channel_block_idx  = get_global_id(0);
   int out_height_idx = get_global_id(1);
   int width_workitem_id = get_global_id(2);
@@ -33,8 +32,8 @@ __kernel void conv2d(
   int in_channel_block_range = UPDIV4(in_channel_num);
   int weight_offset = out_channel_block_idx * in_channel_block_range * kernel_height * kernel_width * 4;
 
-  float4 out0 = 0;
-  float4 out1 = 0;
+  float4 out0 = convert_float4(vload4(out_channel_block_idx, bias));
+  float4 out1 = out0;
 
   int in_channel_block_idx = 0;
   for (in_channel_block_idx = 0;
@@ -78,14 +77,20 @@ __kernel void conv2d(
   }
 
 #ifdef USE_INSTANCE_NORM
-  // TODO
+  float4 mean_val = convert_float4(vload4(out_channel_block_idx, mean));
+  float4 var_val = convert_float4(vload4(out_channel_block_idx, variance));
+  float4 var_coefficient = 1.0/sqrt(var_val+1e-5);
+  out0 = (out0 - mean_val) * var_coefficient;
+  out1 = (out1 - mean_val) * var_coefficient;
 #endif
 #ifdef USE_RELU
-  // TODO
+  out0 = max(out0, 0.0);
+  out1 = max(out1, 0.0);
 #endif
 
 #ifdef USE_TANH
-  // TODO
+  out0 = tanh(out0);
+  out1 = tanh(out1);
 #endif
   int out0_offset = out_channel_block_idx * out_height * out_width +
                     out_height_idx * out_width +

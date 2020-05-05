@@ -4,7 +4,7 @@
 
 
 static bool initialized = false;
-static cl_program conv2d_regular_program;
+static cl_program conv2d_regular_program = nullptr;
 static cl_kernel conv2d_regular_kernel = nullptr;
 static cl_program conv2d_norm_relu_program = nullptr;
 static cl_kernel conv2d_norm_relu_kernel = nullptr;
@@ -52,6 +52,14 @@ void init_kernels(cl_context context, cl_device_id device) {
                                                    "");
   conv2d_transpose_regular_kernel = clCreateKernel(
       conv2d_transpose_regular_program,
+      "conv2d_transpose_3x3_stride2",
+      nullptr);
+  conv2d_transpose_norm_relu_program = CreateProgram(context,
+                                                   device,
+                                                   "conv2d_transpose.cl",
+                                                   "-DUSE_INSTANCE_NORM=1 -DUSE_RELU=1");
+  conv2d_transpose_norm_relu_kernel = clCreateKernel(
+      conv2d_transpose_norm_relu_program,
       "conv2d_transpose_3x3_stride2",
       nullptr);
 
@@ -155,7 +163,14 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
                                                        cl_int out_width,
                                                        bool fuse_instance_norm,
                                                        activation act) {
-  cl_kernel kernel = conv2d_transpose_norm_relu_kernel;
+  cl_kernel kernel;
+  if (fuse_instance_norm) {
+    assert(act == activation::RELU);
+    kernel = conv2d_transpose_norm_relu_kernel;
+  } else {
+    assert(act == activation::NONE);
+    kernel = conv2d_transpose_regular_kernel;
+  }
   cl_int errNum;
   errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
   errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &weight);
@@ -186,9 +201,9 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
