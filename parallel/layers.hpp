@@ -51,6 +51,7 @@ enum class conv2d_variant {
     NCHW4,
     NHWC,
     NHWC_VER2,
+    NHWC_VER3,
     NCHW,
     NCHW_VER2,
     NCHW4_INTERLEAVE,

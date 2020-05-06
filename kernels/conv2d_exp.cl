@@ -522,6 +522,97 @@ __kernel void conv2d_nhwc_ver2(
   vstore4(out1, out1_offset, output);
 }
 
+__kernel void conv2d_nhwc_ver3(
+  __global float* input, /* layout: HWC */
+  __global float* weight, /* layout: HWOI */
+  __global float* bias,
+  __global float* output, /* layout: HWC */
+  __private long in_channel_num,
+  __private long in_height,
+  __private long in_width,
+  __private long out_channel_num,
+  __private long out_height,
+  __private long out_width,
+  __private long stride,
+  __private long kernel_height,
+  __private long kernel_width
+  #ifdef USE_INSTANCE_NORM
+  ,
+  __global float* mean,
+  __global float* variance
+  #endif
+  )
+{
+  long out_height_idx = get_global_id(0);
+  long width_workitem_id = get_global_id(1);
+  long out_channel_block_idx = get_global_id(2);
+  long out_width_idx = width_workitem_id * UNROLL_CNT;
+
+  long in_channel_block_range = UPDIV4(in_channel_num);
+  long out_channel_block_range = (out_channel_num + 3) / 4;
+
+  float4 out0 = convert_float4(vload4(out_channel_block_idx, bias));
+  float4 out1 = out0;
+  float4 out2 = out0;
+  float4 out3 = out0;
+
+  long input_upper_left_offset = out_height_idx * stride * in_width * in_channel_block_range + out_width_idx * stride * in_channel_block_range;
+  for (long kh_idx = 0; kh_idx < kernel_height; kh_idx++)
+  {
+    long input_line_offset = input_upper_left_offset + kh_idx * in_width * in_channel_block_range;
+    for (long kw_idx = 0; kw_idx < kernel_width; kw_idx++)
+    {
+      long input_wid_offset = input_line_offset + kw_idx * in_channel_block_range;
+      for (long in_channel_block_idx = 0;
+          in_channel_block_idx < in_channel_block_range;
+          in_channel_block_idx++)
+      {
+        long weight_offset = kh_idx * kernel_width * out_channel_block_range * 4 * in_channel_block_range
+                             + kw_idx * out_channel_block_range * 4 * in_channel_block_range
+                             + out_channel_block_idx * 4 * in_channel_block_range
+                             + in_channel_block_idx;
+        long in0_offset = input_wid_offset + in_channel_block_idx;
+        long in1_offset = in0_offset + stride * in_channel_block_range;
+        float4 in0 = convert_float4(vload4(in0_offset, input));
+        float4 in1 = convert_float4(vload4(in1_offset, input));
+        float4 in2 = convert_float4(vload4(in0_offset + stride * in_channel_block_range * 2, input));
+        float4 in3 = convert_float4(vload4(in0_offset + stride * in_channel_block_range * 3, input));
+
+
+        float4 w0 = convert_float4(vload4(weight_offset, weight));
+        float4 w1 = convert_float4(vload4(weight_offset+in_channel_block_range, weight));
+        float4 w2 = convert_float4(vload4(weight_offset+2 * in_channel_block_range, weight));
+        float4 w3 = convert_float4(vload4(weight_offset+3 * in_channel_block_range, weight));
+
+        out0.x += dot(in0, w0);
+        out0.y += dot(in0, w1);
+        out0.z += dot(in0, w2);
+        out0.w += dot(in0, w3);
+        out1.x += dot(in1, w0);
+        out1.y += dot(in1, w1);
+        out1.z += dot(in1, w2);
+        out1.w += dot(in1, w3);
+        out2.x += dot(in2, w0);
+        out2.y += dot(in2, w1);
+        out2.z += dot(in2, w2);
+        out2.w += dot(in2, w3);
+        out3.x += dot(in3, w0);
+        out3.y += dot(in3, w1);
+        out3.z += dot(in3, w2);
+        out3.w += dot(in3, w3);
+      }
+    }
+  }
+  long out0_offset = out_height_idx * out_width * out_channel_block_range +
+                     out_width_idx * out_channel_block_range +
+                     out_channel_block_idx;
+  long out1_offset = out0_offset + out_channel_block_range;
+  vstore4(out0, out0_offset, output);
+  vstore4(out1, out1_offset, output);
+  vstore4(out0, out0_offset + out_channel_block_range * 2, output);
+  vstore4(out0, out0_offset + out_channel_block_range * 3, output);
+}
+
 
 __kernel void conv2d_nchw(
   __global float* input, /* layout: CHW */

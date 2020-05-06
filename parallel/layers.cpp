@@ -19,6 +19,7 @@ static cl_kernel conv2d_nchw_kernel = nullptr;
 static cl_kernel conv2d_nchw_ver2_kernel = nullptr;
 static cl_kernel conv2d_nhwc_kernel = nullptr;
 static cl_kernel conv2d_nhwc_ver2_kernel = nullptr;
+static cl_kernel conv2d_nhwc_ver3_kernel = nullptr;
 static cl_kernel conv2d_nchw4_interleave_kernel = nullptr;
 static cl_kernel conv2d_nchw4_interleave_ver2_kernel = nullptr;
 static cl_kernel conv2d_nchw4_block_kernel = nullptr;
@@ -100,6 +101,7 @@ void init_kernels(cl_context context, cl_device_id device) {
   conv2d_nchw4_block_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw4_block", nullptr);
   conv2d_nchw_ver2_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw_ver2", nullptr);
   conv2d_nhwc_ver2_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nhwc_ver2", nullptr);
+  conv2d_nhwc_ver3_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nhwc_ver3", nullptr);
   conv2d_nchw4_interleave_ver2_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw4_interleave_ver2", nullptr);
 
   conversion_program = CreateProgram(context,
@@ -245,6 +247,9 @@ void conv2d_experimental_exec(cl_command_queue queue,
     case conv2d_variant::NCHW4_INTERLEAVE_VER2:
       kernel = conv2d_nchw4_interleave_ver2_kernel;
       break;
+    case conv2d_variant::NHWC_VER3:
+      kernel = conv2d_nhwc_ver3_kernel;
+      break;
   }
   cl_int errNum;
   errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
@@ -295,6 +300,11 @@ void conv2d_experimental_exec(cl_command_queue queue,
     case conv2d_variant::NCHW4_INTERLEAVE_VER2:
       globalWorkSize = {(size_t) (out_channel_num + 3)/4, (size_t) out_height,
                         (size_t) out_width/4}; // (C_block, H, W/UNROLL)
+      break;
+    case conv2d_variant::NHWC_VER3:
+      globalWorkSize = {(size_t) out_height,
+                        (size_t) out_width / 4,
+                        (size_t) (out_channel_num + 3) / 4};
       break;
   }
 
