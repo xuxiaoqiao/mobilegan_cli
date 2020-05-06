@@ -20,8 +20,13 @@ public:
     cl_mem weight_buf;
     cl_mem bias_buf;
 
-    kernel(int c_out, int c_in, int h, int w) 
-    : C_out(c_out), C_in(c_in), H(h), W(w) {
+    kernel(int c_out, int c_in, int h, int w)
+        : C_out(c_out),
+          C_in(c_in),
+          H(h),
+          W(w),
+          weight_buf(nullptr),
+          bias_buf(nullptr) {
         int c_out_tmp = c_out == 3 ? 4 : c_out;
         int c_in_tmp = c_in == 3 ? 4 : c_in;
         weight.resize(c_out_tmp * c_in_tmp * h * w, 0.0);
@@ -38,8 +43,10 @@ public:
     cl_mem mean_buf;
     cl_mem variance_buf;
 
-    norm_stat(int c) 
-    : C(c), mean(c, 0.0), variance(c, 0.0) {}
+  explicit norm_stat(int c)
+      : C(c), mean(c, 0.0), variance(c, 0.0), mean_buf(nullptr), variance_buf(
+      nullptr) {
+  }
 };
 
 class res_block

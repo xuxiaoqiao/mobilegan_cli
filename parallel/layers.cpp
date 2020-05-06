@@ -6,6 +6,8 @@
 static bool initialized = false;
 static cl_program conv2d_regular_program = nullptr;
 static cl_kernel conv2d_regular_kernel = nullptr;
+static cl_program conv2d_norm_program = nullptr;
+static cl_kernel conv2d_norm_kernel = nullptr;
 static cl_program conv2d_norm_relu_program = nullptr;
 static cl_kernel conv2d_norm_relu_kernel = nullptr;
 static cl_program conv2d_tanh_program = nullptr;
@@ -40,6 +42,13 @@ void init_kernels(cl_context context, cl_device_id device) {
                                          "conv2d.cl",
                                          "");
   conv2d_regular_kernel = clCreateKernel(conv2d_regular_program, "conv2d", nullptr);
+
+  conv2d_norm_program = CreateProgram(context,
+                                           device,
+                                           "conv2d.cl",
+                                           "-DUSE_INSTANCE_NORM=1");
+  conv2d_norm_kernel =
+      clCreateKernel(conv2d_norm_program, "conv2d", nullptr);
 
   conv2d_norm_relu_program = CreateProgram(context,
                                            device,
@@ -109,21 +118,25 @@ void conv2d_exec_async(cl_command_queue queue,
                        cl_mem output,
                        cl_mem mean,
                        cl_mem variance,
-                       cl_int in_channel_num,
-                       cl_int in_height,
-                       cl_int in_width,
-                       cl_int out_channel_num,
-                       cl_int out_height,
-                       cl_int out_width,
-                       cl_int stride,
-                       cl_int kernel_height,
-                       cl_int kernel_width,
+                       cl_long in_channel_num,
+                       cl_long in_height,
+                       cl_long in_width,
+                       cl_long out_channel_num,
+                       cl_long out_height,
+                       cl_long out_width,
+                       cl_long stride,
+                       cl_long kernel_height,
+                       cl_long kernel_width,
                        bool fuse_instance_norm,
                        activation act) {
   cl_kernel kernel = nullptr;
   if (fuse_instance_norm) {
-    assert(act == activation::RELU);
-    kernel = conv2d_norm_relu_kernel;
+    assert(act == activation::RELU || act == activation::NONE);
+    if (act == activation::RELU) {
+      kernel = conv2d_norm_relu_kernel;
+    } else {
+      kernel = conv2d_norm_kernel;
+    }
   } else {
     if (act == activation::TANH) {
       kernel = conv2d_tanh_kernel;
@@ -136,15 +149,15 @@ void conv2d_exec_async(cl_command_queue queue,
   errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &weight);
   errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &bias);
   errNum |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &output);
-  errNum |= clSetKernelArg(kernel, 4, sizeof(cl_int), &in_channel_num);
-  errNum |= clSetKernelArg(kernel, 5, sizeof(cl_int), &in_height);
-  errNum |= clSetKernelArg(kernel, 6, sizeof(cl_int), &in_width);
-  errNum |= clSetKernelArg(kernel, 7, sizeof(cl_int), &out_channel_num);
-  errNum |= clSetKernelArg(kernel, 8, sizeof(cl_int), &out_height);
-  errNum |= clSetKernelArg(kernel, 9, sizeof(cl_int), &out_width);
-  errNum |= clSetKernelArg(kernel, 10, sizeof(cl_int), &stride);
-  errNum |= clSetKernelArg(kernel, 11, sizeof(cl_int), &kernel_height);
-  errNum |= clSetKernelArg(kernel, 12, sizeof(cl_int), &kernel_width);
+  errNum |= clSetKernelArg(kernel, 4, sizeof(cl_long), &in_channel_num);
+  errNum |= clSetKernelArg(kernel, 5, sizeof(cl_long), &in_height);
+  errNum |= clSetKernelArg(kernel, 6, sizeof(cl_long), &in_width);
+  errNum |= clSetKernelArg(kernel, 7, sizeof(cl_long), &out_channel_num);
+  errNum |= clSetKernelArg(kernel, 8, sizeof(cl_long), &out_height);
+  errNum |= clSetKernelArg(kernel, 9, sizeof(cl_long), &out_width);
+  errNum |= clSetKernelArg(kernel, 10, sizeof(cl_long), &stride);
+  errNum |= clSetKernelArg(kernel, 11, sizeof(cl_long), &kernel_height);
+  errNum |= clSetKernelArg(kernel, 12, sizeof(cl_long), &kernel_width);
   if (fuse_instance_norm) {
     errNum |= clSetKernelArg(kernel, 13, sizeof(cl_mem), &mean);
     errNum |= clSetKernelArg(kernel, 14, sizeof(cl_mem), &variance);
@@ -166,9 +179,9 @@ void conv2d_exec_async(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
@@ -180,12 +193,12 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
                                                        cl_mem output,
                                                        cl_mem mean,
                                                        cl_mem variance,
-                                                       cl_int in_channel_num,
-                                                       cl_int in_height,
-                                                       cl_int in_width,
-                                                       cl_int out_channel_num,
-                                                       cl_int out_height,
-                                                       cl_int out_width,
+                                                       cl_long in_channel_num,
+                                                       cl_long in_height,
+                                                       cl_long in_width,
+                                                       cl_long out_channel_num,
+                                                       cl_long out_height,
+                                                       cl_long out_width,
                                                        bool fuse_instance_norm,
                                                        activation act) {
   cl_kernel kernel;
@@ -201,12 +214,12 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
   errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &weight);
   errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &bias);
   errNum |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &output);
-  errNum |= clSetKernelArg(kernel, 4, sizeof(cl_int), &in_channel_num);
-  errNum |= clSetKernelArg(kernel, 5, sizeof(cl_int), &in_height);
-  errNum |= clSetKernelArg(kernel, 6, sizeof(cl_int), &in_width);
-  errNum |= clSetKernelArg(kernel, 7, sizeof(cl_int), &out_channel_num);
-  errNum |= clSetKernelArg(kernel, 8, sizeof(cl_int), &out_height);
-  errNum |= clSetKernelArg(kernel, 9, sizeof(cl_int), &out_width);
+  errNum |= clSetKernelArg(kernel, 4, sizeof(cl_long), &in_channel_num);
+  errNum |= clSetKernelArg(kernel, 5, sizeof(cl_long), &in_height);
+  errNum |= clSetKernelArg(kernel, 6, sizeof(cl_long), &in_width);
+  errNum |= clSetKernelArg(kernel, 7, sizeof(cl_long), &out_channel_num);
+  errNum |= clSetKernelArg(kernel, 8, sizeof(cl_long), &out_height);
+  errNum |= clSetKernelArg(kernel, 9, sizeof(cl_long), &out_width);
   errNum |= clSetKernelArg(kernel, 10, sizeof(cl_mem), &mean);
   errNum |= clSetKernelArg(kernel, 11, sizeof(cl_mem), &variance);
   if (errNum != CL_SUCCESS) {
@@ -226,9 +239,9 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
@@ -236,9 +249,9 @@ void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
 void convert_chw_to_chw4(cl_command_queue queue,
                          cl_mem input,
                          cl_mem output,
-                         cl_int in_channel_num,
-                         cl_int in_height,
-                         cl_int in_width) {
+                         cl_long in_channel_num,
+                         cl_long in_height,
+                         cl_long in_width) {
   assert(in_channel_num == 3 || in_channel_num % 4 == 0);
   cl_int errNum;
   errNum = clSetKernelArg(convert_chw_to_chw4_kernel, 0, sizeof(cl_mem), &input);
@@ -263,9 +276,9 @@ void convert_chw_to_chw4(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
@@ -273,16 +286,16 @@ void convert_chw_to_chw4(cl_command_queue queue,
 void convert_chw4_to_chw(cl_command_queue queue,
                          cl_mem input,
                          cl_mem output,
-                         cl_int in_channel_num,
-                         cl_int in_height,
-                         cl_int in_width) {
+                         cl_long in_channel_num,
+                         cl_long in_height,
+                         cl_long in_width) {
   assert(in_channel_num == 3 || in_channel_num % 4 == 0);
   cl_int errNum;
   errNum = clSetKernelArg(convert_chw4_to_chw_kernel, 0, sizeof(cl_mem), &input);
   errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 1, sizeof(cl_mem), &output);
-  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 2, sizeof(cl_int), &in_channel_num);
-  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 3, sizeof(cl_int), &in_height);
-  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 4, sizeof(cl_int), &in_width);
+  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 2, sizeof(cl_long), &in_channel_num);
+  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 3, sizeof(cl_long), &in_height);
+  errNum |= clSetKernelArg(convert_chw4_to_chw_kernel, 4, sizeof(cl_long), &in_width);
   if (errNum != CL_SUCCESS) {
     std::cerr << "Error setting kernel arguments." << std::endl;
     std::abort();
@@ -299,9 +312,9 @@ void convert_chw4_to_chw(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
@@ -309,15 +322,15 @@ void convert_chw4_to_chw(cl_command_queue queue,
 void zeropad_2d_onepix(cl_command_queue queue,
                        cl_mem input,
                        cl_mem output,
-                       cl_int in_channel_num,
-                       cl_int in_height,
-                       cl_int in_width) {
+                       cl_long in_channel_num,
+                       cl_long in_height,
+                       cl_long in_width) {
   cl_int errNum;
   errNum = clSetKernelArg(zero_pad_2d_onepix_kernel, 0, sizeof(cl_mem), &input);
   errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 1, sizeof(cl_mem), &output);
-  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 2, sizeof(cl_int), &in_channel_num);
-  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 3, sizeof(cl_int), &in_height);
-  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 4, sizeof(cl_int), &in_width);
+  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 2, sizeof(cl_long), &in_channel_num);
+  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 3, sizeof(cl_long), &in_height);
+  errNum |= clSetKernelArg(zero_pad_2d_onepix_kernel, 4, sizeof(cl_long), &in_width);
   if (errNum != CL_SUCCESS) {
     std::cerr << "Error setting kernel arguments." << std::endl;
     std::abort();
@@ -334,9 +347,9 @@ void zeropad_2d_onepix(cl_command_queue queue,
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
@@ -344,17 +357,17 @@ void zeropad_2d_onepix(cl_command_queue queue,
 void reflectpad_2d(cl_command_queue queue,
                    cl_mem input,
                    cl_mem output,
-                   cl_int in_channel_num,
-                   cl_int in_height,
-                   cl_int in_width,
-                   cl_int padding) {
+                   cl_long in_channel_num,
+                   cl_long in_height,
+                   cl_long in_width,
+                   cl_long padding) {
   cl_int errNum;
   if (padding == 1) {
     errNum = clSetKernelArg(reflect_pad_2d_onepix_kernel, 0, sizeof(cl_mem), &input);
     errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 1, sizeof(cl_mem), &output);
-    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 2, sizeof(cl_int), &in_channel_num);
-    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 3, sizeof(cl_int), &in_height);
-    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 4, sizeof(cl_int), &in_width);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 2, sizeof(cl_long), &in_channel_num);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 3, sizeof(cl_long), &in_height);
+    errNum |= clSetKernelArg(reflect_pad_2d_onepix_kernel, 4, sizeof(cl_long), &in_width);
     if (errNum != CL_SUCCESS) {
       std::cerr << "Error setting kernel arguments." << std::endl;
       std::abort();
@@ -374,10 +387,10 @@ void reflectpad_2d(cl_command_queue queue,
   } else {
     errNum = clSetKernelArg(reflect_pad_2d_general_kernel, 0, sizeof(cl_mem), &input);
     errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 1, sizeof(cl_mem), &output);
-    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 2, sizeof(cl_int), &in_channel_num);
-    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 3, sizeof(cl_int), &in_height);
-    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 4, sizeof(cl_int), &in_width);
-    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 5, sizeof(cl_int), &padding);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 2, sizeof(cl_long), &in_channel_num);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 3, sizeof(cl_long), &in_height);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 4, sizeof(cl_long), &in_width);
+    errNum |= clSetKernelArg(reflect_pad_2d_general_kernel, 5, sizeof(cl_long), &padding);
     if (errNum != CL_SUCCESS) {
       std::cerr << "Error setting kernel arguments." << std::endl;
       std::abort();
@@ -396,18 +409,18 @@ void reflectpad_2d(cl_command_queue queue,
     }
   }
 
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }
 
-void add(cl_command_queue queue, cl_mem src, cl_mem dst, cl_int len) {
+void add(cl_command_queue queue, cl_mem src, cl_mem dst, cl_long len) {
   cl_int errNum;
   errNum = clSetKernelArg(add_kernel, 0, sizeof(cl_mem), &src);
   errNum |= clSetKernelArg(add_kernel, 1, sizeof(cl_mem), &dst);
-  errNum |= clSetKernelArg(add_kernel, 2, sizeof(cl_int), &len);
+  errNum |= clSetKernelArg(add_kernel, 2, sizeof(cl_long), &len);
   if (errNum != CL_SUCCESS) {
     std::cerr << "Error setting kernel arguments." << std::endl;
     std::abort();
@@ -423,9 +436,9 @@ void add(cl_command_queue queue, cl_mem src, cl_mem dst, cl_int len) {
     std::cerr << "Error queuing kernel for execution." << std::endl;
     std::abort();
   }
-  errNum = clFlush(queue);
+  errNum = clFinish(queue);
   if (errNum != CL_SUCCESS) {
-    std::cerr << "Error clFlush()." << std::endl;
+    std::cerr << "Error clFinish()." << std::endl;
     std::abort();
   }
 }

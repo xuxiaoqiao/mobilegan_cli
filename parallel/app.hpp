@@ -3,10 +3,9 @@
 
 
 #include "parallel/model.hpp"
-#include "parallel/layers.hpp"
 namespace parallel {
 
-class gan_buffer_t {
+class gan_buffer_t final {
  public:
   cl_mem o_0;
   cl_mem o_1;
@@ -53,13 +52,33 @@ class gan_buffer_t {
   cl_mem o_4;
   cl_mem o_5;
   cl_mem o_6;
+  gan_buffer_t() = delete;
+  explicit gan_buffer_t(cl_context context);
+  ~gan_buffer_t();
 };
-
-void init_gan_buffer(gan_buffer_t &buf, cl_context context);
-void release_gan_buffer(gan_buffer_t &buf);
 
 int run(cl_mem input, cl_mem output, gan_buffer_t &buf, model &cycleGAN,
         cl_command_queue queue);
+
+// struct profile_data {
+//   struct resnet_block_profile {
+//     double pad0 = 0.0;
+//     double conv0 = 0.0;
+//     double pad1 = 0.0;
+//     double conv1 = 0.0;
+//     double add = 0.0;
+//   };
+//   int recorded_run = 0;
+//   int current_iter = 0;
+//   double pad0 = 0.0;
+//   double conv0 = 0.0;
+//   double pad1 = 0.0;
+//   double conv1 = 0.0;
+//   double pad2 = 0.0;
+//   double conv2 = 0.0;
+// };
+
+int example_main();
 
 }
 
