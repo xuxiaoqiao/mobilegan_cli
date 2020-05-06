@@ -84,6 +84,12 @@ void BenchmarkConv::run(conv2d_variant var, int num_iteration) {
       break;
     case conv2d_variant::NHWC: label = "NHWC";
       break;
+    case conv2d_variant::NCHW4_INTERLEAVE: label = "NCHW4_INTERLEAVE";
+      break;
+    case conv2d_variant::NCHW4_BLOCK: label = "NCHW4_BLOCK";
+      break;
+    case conv2d_variant::NCHW_VER2: label = "NCHW_VER2";
+      break;
   }
   std::chrono::time_point<std::chrono::system_clock> phase_start;
   phase_start = std::chrono::system_clock::now();
@@ -100,9 +106,12 @@ void BenchmarkConv::run(conv2d_variant var, int num_iteration) {
 
 void benchmark_run() {
   BenchmarkConv bench;
-  bench.run(conv2d_variant::NHWC, 3);
+  bench.run(conv2d_variant::NCHW4_INTERLEAVE, 3);
+  bench.run(conv2d_variant::NCHW4_BLOCK, 3);
   bench.run(conv2d_variant::NCHW4, 3);
+  bench.run(conv2d_variant::NCHW_VER2, 3);
   bench.run(conv2d_variant::NCHW, 3);
+  bench.run(conv2d_variant::NHWC, 3);
 
 }
 }

@@ -16,7 +16,10 @@ static cl_kernel conv2d_tanh_kernel = nullptr;
 
 static cl_program conv2d_exp_program = nullptr;
 static cl_kernel conv2d_nchw_kernel = nullptr;
+static cl_kernel conv2d_nchw_ver2_kernel = nullptr;
 static cl_kernel conv2d_nhwc_kernel = nullptr;
+static cl_kernel conv2d_nchw4_interleave_kernel = nullptr;
+static cl_kernel conv2d_nchw4_block_kernel = nullptr;
 
 static cl_program conv2d_transpose_regular_program = nullptr;
 static cl_kernel conv2d_transpose_regular_kernel = nullptr;
@@ -91,6 +94,9 @@ void init_kernels(cl_context context, cl_device_id device) {
                                          "");
   conv2d_nchw_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw", nullptr);
   conv2d_nhwc_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nhwc", nullptr);
+  conv2d_nchw4_interleave_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw4_interleave", nullptr);
+  conv2d_nchw4_block_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw4_block", nullptr);
+  conv2d_nchw_ver2_kernel =  clCreateKernel(conv2d_exp_program, "conv2d_nchw_ver2", nullptr);
 
   conversion_program = CreateProgram(context,
                                      device,
@@ -224,6 +230,12 @@ void conv2d_experimental_exec(cl_command_queue queue,
       break;
     case conv2d_variant::NCHW4: kernel = conv2d_regular_kernel;
       break;
+    case conv2d_variant::NCHW4_INTERLEAVE: kernel = conv2d_nchw4_interleave_kernel;
+      break;
+    case conv2d_variant::NCHW4_BLOCK: kernel = conv2d_nchw4_block_kernel;
+      break;
+    case conv2d_variant::NCHW_VER2: kernel = conv2d_nchw_ver2_kernel;
+      break;
   }
   cl_int errNum;
   errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
@@ -248,6 +260,8 @@ void conv2d_experimental_exec(cl_command_queue queue,
   std::array<size_t, 3> globalWorkSize;
   switch (variant) {
     case conv2d_variant::NCHW4:
+    case conv2d_variant::NCHW4_BLOCK:
+    case conv2d_variant::NCHW4_INTERLEAVE:
       globalWorkSize = {(size_t) (out_channel_num + 3)/4, (size_t) out_height,
                         (size_t) out_width/2}; // (C_block, H, W/UNROLL)
       break;
@@ -259,6 +273,10 @@ void conv2d_experimental_exec(cl_command_queue queue,
     case conv2d_variant::NCHW:
       globalWorkSize = {(size_t) out_channel_num, (size_t) out_height,
                         (size_t) out_width};
+      break;
+    case conv2d_variant::NCHW_VER2:
+      globalWorkSize = {(size_t) out_channel_num, (size_t) out_height,
+                        (size_t) out_width / 4};
       break;
   }
 

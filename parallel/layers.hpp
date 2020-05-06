@@ -50,7 +50,10 @@ void conv2d_exec_async(
 enum class conv2d_variant {
     NCHW4,
     NHWC,
-    NCHW
+    NCHW,
+    NCHW_VER2,
+    NCHW4_INTERLEAVE,
+    NCHW4_BLOCK
 };
 void conv2d_experimental_exec(cl_command_queue queue,
                               cl_mem input,
