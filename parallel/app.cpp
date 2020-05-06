@@ -405,7 +405,7 @@ int example_main() {
     std::cout << "error clCreateBuffer" << std::endl;
     std::abort();
   }
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 10; i++) {
     run(input_clbuf, output_clbuf, gan_buf, gan_model, commandQueue);
     errNum = clEnqueueReadBuffer(commandQueue,
                                  output_clbuf,

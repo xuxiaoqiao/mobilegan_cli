@@ -1,4 +1,5 @@
 #include <iostream>
+#include <array>
 #include "parallel/layers.hpp"
 #include "parallel/runtime.hpp"
 
@@ -12,6 +13,10 @@ static cl_program conv2d_norm_relu_program = nullptr;
 static cl_kernel conv2d_norm_relu_kernel = nullptr;
 static cl_program conv2d_tanh_program = nullptr;
 static cl_kernel conv2d_tanh_kernel = nullptr;
+
+static cl_program conv2d_exp_program = nullptr;
+static cl_kernel conv2d_nchw_kernel = nullptr;
+static cl_kernel conv2d_nhwc_kernel = nullptr;
 
 static cl_program conv2d_transpose_regular_program = nullptr;
 static cl_kernel conv2d_transpose_regular_kernel = nullptr;
@@ -79,6 +84,13 @@ void init_kernels(cl_context context, cl_device_id device) {
       conv2d_transpose_norm_relu_program,
       "conv2d_transpose_3x3_stride2",
       nullptr);
+
+  conv2d_exp_program = CreateProgram(context,
+                                         device,
+                                         "conv2d_exp.cl",
+                                         "");
+  conv2d_nchw_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nchw", nullptr);
+  conv2d_nhwc_kernel = clCreateKernel(conv2d_exp_program, "conv2d_nhwc", nullptr);
 
   conversion_program = CreateProgram(context,
                                      device,
@@ -185,6 +197,87 @@ void conv2d_exec_async(cl_command_queue queue,
     std::abort();
   }
 }
+
+
+void conv2d_experimental_exec(cl_command_queue queue,
+                       cl_mem input,
+                       cl_mem weight,
+                       cl_mem bias,
+                       cl_mem output,
+                       cl_mem mean,
+                       cl_mem variance,
+                       cl_long in_channel_num,
+                       cl_long in_height,
+                       cl_long in_width,
+                       cl_long out_channel_num,
+                       cl_long out_height,
+                       cl_long out_width,
+                       cl_long stride,
+                       cl_long kernel_height,
+                       cl_long kernel_width,
+                       conv2d_variant variant) {
+  cl_kernel kernel = nullptr;
+  switch (variant) {
+    case conv2d_variant::NHWC: kernel = conv2d_nhwc_kernel;
+      break;
+    case conv2d_variant::NCHW: kernel = conv2d_nchw_kernel;
+      break;
+    case conv2d_variant::NCHW4: kernel = conv2d_regular_kernel;
+      break;
+  }
+  cl_int errNum;
+  errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
+  errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &weight);
+  errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &bias);
+  errNum |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &output);
+  errNum |= clSetKernelArg(kernel, 4, sizeof(cl_long), &in_channel_num);
+  errNum |= clSetKernelArg(kernel, 5, sizeof(cl_long), &in_height);
+  errNum |= clSetKernelArg(kernel, 6, sizeof(cl_long), &in_width);
+  errNum |= clSetKernelArg(kernel, 7, sizeof(cl_long), &out_channel_num);
+  errNum |= clSetKernelArg(kernel, 8, sizeof(cl_long), &out_height);
+  errNum |= clSetKernelArg(kernel, 9, sizeof(cl_long), &out_width);
+  errNum |= clSetKernelArg(kernel, 10, sizeof(cl_long), &stride);
+  errNum |= clSetKernelArg(kernel, 11, sizeof(cl_long), &kernel_height);
+  errNum |= clSetKernelArg(kernel, 12, sizeof(cl_long), &kernel_width);
+
+  if (errNum != CL_SUCCESS) {
+    std::cerr << "Error setting kernel arguments." << std::endl;
+    std::abort();
+  }
+
+  std::array<size_t, 3> globalWorkSize;
+  switch (variant) {
+    case conv2d_variant::NCHW4:
+      globalWorkSize = {(size_t) (out_channel_num + 3)/4, (size_t) out_height,
+                        (size_t) out_width/2}; // (C_block, H, W/UNROLL)
+      break;
+    case conv2d_variant::NHWC:
+      globalWorkSize = {(size_t) out_height,
+                        (size_t) out_width,
+                        (size_t) out_channel_num};
+      break;
+    case conv2d_variant::NCHW:
+      globalWorkSize = {(size_t) out_channel_num, (size_t) out_height,
+                        (size_t) out_width};
+      break;
+  }
+
+
+  // Queue the kernel up for execution across the array
+  errNum = clEnqueueNDRangeKernel(queue, kernel, 3, nullptr,
+                                  globalWorkSize.data(), nullptr,
+                                  0, nullptr, nullptr);
+  if (errNum != CL_SUCCESS) {
+    std::cerr << "Error queuing kernel for execution." << std::endl;
+    std::abort();
+  }
+  errNum = clFinish(queue);
+  if (errNum != CL_SUCCESS) {
+    std::cerr << "Error clFinish()." << std::endl;
+    std::abort();
+  }
+}
+
 
 void conv2d_transpose_3x3_stride2_norm_relu_exec_async(cl_command_queue queue,
                                                        cl_mem input,
