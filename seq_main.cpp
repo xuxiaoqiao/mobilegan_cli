@@ -7,13 +7,6 @@ using namespace std;
 using namespace seq;
 
 int main(int argc, char **argv) {
-  // test_reflection_pad_2d();
-  // test_zero_pad_2d();
-  // test_conv_2d();
-  // test_conv_transpose_2d();
-  // test_instance_norm();
-  // test_relu();
-  // test_Tanh();
   model cycleGAN;
   load_model(cycleGAN);
   gan_buffer_t buf;
@@ -30,9 +23,5 @@ int main(int argc, char **argv) {
     }
   }
   run(input, output, buf, cycleGAN);
-//  cycleGAN.m_26.weight.print();
-//  for (int i = 0; i < cycleGAN.m_4.C_out; i++) {
-//    printf("%f\n", cycleGAN.m_4.bias[i]);
-//  }
   return 0;
 }
