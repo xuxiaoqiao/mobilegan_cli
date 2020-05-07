@@ -6,5 +6,6 @@
 using namespace std;
 int main(int argc, char **argv) {
   parallel::benchmark_run();
+  // parallel::example_main();
   return 0;
 }
