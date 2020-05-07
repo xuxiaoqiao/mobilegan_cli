@@ -43,7 +43,6 @@ static cl_program util_program = nullptr;
 static cl_kernel add_kernel = nullptr;
 
 void init_kernels(cl_context context, cl_device_id device) {
-  // TODO: initialize all the cl_program & cl_kernel
   if (initialized) {
     std::cout << "already initialized" << std::endl;
     return;
@@ -312,8 +311,8 @@ void conv2d_experimental_exec(cl_command_queue queue,
                         (size_t) (out_channel_num + 3) / 4};
       break;
     case conv2d_variant::NHWC_VER4:
-      globalWorkSize = {(size_t) 32,
-                        (size_t) 64 / 4,
+      globalWorkSize = {(size_t) 64,
+                        (size_t) 16 / 4,
                         (size_t) (256 + 3) / 4};
       break;
   }
